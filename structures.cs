@@ -167,7 +167,7 @@ using System.Threading.Tasks;
         }
       
       public List<Cell<T>> EachCellReadingOrder(){
-        return grid.selectMany(x => x).OrderBy(x => x.loc.row).ThenBy(x => x.loc.col).ToList();
+        return grid.SelectMany(x => x).OrderBy(x => x.loc.row).ThenBy(x => x.loc.col).ToList();
       }
 
         public List<Coord> EachPoint()

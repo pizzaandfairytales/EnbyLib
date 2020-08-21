@@ -101,10 +101,17 @@ using System.Threading.Tasks;
             T value = list[k];  
             list[k] = list[n];  
             list[n] = value;  
-        } 
-          
-        public static List<T> InterpolatePattern<T>(this List<T>, this Action<T> patternGenerator, int period){
-          
         }
      }
+      
+      public static List<T> InterpolatePattern<T>(this List<T> list, Func<T> patternGenerator, int period){
+        var result = new List<T>();  
+        for (int x = 0; x < list.Count; x++){
+            if (x % period == 0){
+              result.Add(patternGenerator());
+            }
+          result.Add(list[x]);
+          }
+        return result;
+        }
   }
