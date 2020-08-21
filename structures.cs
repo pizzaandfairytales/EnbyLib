@@ -87,7 +87,7 @@ using System.Threading.Tasks;
         }
     }
 
-    public class Cell<T> where T : new()
+    public class Cell<T> : IGraphNode<T> where T : new()
     {
         private Coord _loc;
         public Coord loc { get { return _loc; } set { } }
@@ -99,11 +99,11 @@ using System.Threading.Tasks;
         }
     }
 
-    public class Grid<T> where T : new()
+    public class Grid<T> : IGraph<T> where T : new()
     {
         private Coord _gridSize;
         public Coord gridSize { get { return _gridSize; } set { } }
-        List<List<Cell<T>>> grid;
+        private List<List<Cell<T>>> grid;
         public Grid(Coord param_gridSize)
         {
             _gridSize = param_gridSize;
@@ -190,6 +190,72 @@ using System.Threading.Tasks;
             return true;
         }
     }
+
+public class DijkstraStruct<T>// where T : new()
+{
+  public IGraphNode<T> node;
+  public int distance;
+	public DijkstraStruct<T> previous;
+}
+
+public abstract class IGraphEdge<T>
+{
+	public IGraphNode<T> destination;
+	public int cost;
+}
+
+public abstract class IGraphNode<T>
+{
+  public List<IGraphEdge<T>> neighborEdges;
+}
+
+public abstract class IGraph<T>{
+  public List<IGraphNode<T>> nodes;
+	
+	public List<DijkstraStruct<T>> Dijkstra(IGraphNode<T> source){
+		List<DijkstraStruct<T>> result;
+		var Q = new List<DijkstraStruct<T>>();
+		foreach (var node in nodes){
+			var dstruct = new DijkstraStruct<T>();
+			dstruct.node = node;
+			if (node == source){
+				dstruct.distance = 0;
+			} else {
+				dstruct.distance = -1;
+			}
+			dstruct.previous = null;
+			Q.Add(dstruct);
+		}
+		result = new List<DijkstraStruct<T>>(Q);
+		while (Q.Count > 0){
+			Q.OrderBy(x => x.distance);
+			var current = Q.First();
+			Q.Remove(current);
+			foreach (var neighborEdge in current.node.neighborEdges){
+				var dstructNeighbor = Q.Where(x => x.node == neighborEdge.destination).FirstOrDefault();
+				if (dstructNeighbor != null){
+					var distance = current.distance + neighborEdge.cost;
+					if (dstructNeighbor.distance == -1 || dstructNeighbor.distance < distance){
+						dstructNeighbor.distance = distance;
+						dstructNeighbor.previous = current;
+					}
+				}
+			}
+		}
+		return result;
+	}
+	
+	public List<DijkstraStruct<T>> ShortestPath(List<DijkstraStruct<T>> dijkstraMap, IGraphNode<T> source, IGraphNode<T> destination){
+		var current = dijkstraMap.Where(x => x.node == destination).First();
+		var result = new List<DijkstraStruct<T>>();
+		while (current.previous != null){
+			result.Add(current);
+			current = current.previous;
+		}
+		result.Reverse();
+		return result;
+	}
+}
 
 public class ProbabilityVector {
   public double value;
