@@ -263,9 +263,8 @@ public abstract class Graph<T>{
 			Q.Add(dstruct);
 		}
 		result = new List<DijkstraStruct<T>>(Q);
-		while (Q.Count > 0){
+		while (Q.Where(x => x.distance >= 0).Count() > 0){
       Q = Q.Where(x => x.distance >= 0).OrderBy(x => x.distance).Concat(Q.Where(x => x.distance < 0)).ToList();
-			//Q.OrderBy(x => x.distance);
 			var current = Q.First();
 			Q.Remove(current);
 			foreach (var neighborEdge in current.node.neighborEdges.Where(x => x.destination.navigable).ToList()){
