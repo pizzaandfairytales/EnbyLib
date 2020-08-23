@@ -87,7 +87,7 @@ using System.Threading.Tasks;
         }
     }
 
-    public class Cell<T> : IGraphNode<T> where T : new()
+    public class Cell<T> : GraphNode<T> where T : new()
     {
         private Coord _loc;
         public Coord loc { get { return _loc; } set { } }
@@ -97,43 +97,62 @@ using System.Threading.Tasks;
             _loc = c;
             value = new T();
         }
+      
+      public override void Output(){
+        Console.WriteLine(loc.row + " - " + loc.col);
+      }
     }
 
-    public class Grid<T> : IGraph<T> where T : new()
+    public class Grid<T> : Graph<T> where T : new()
     {
         private Coord _gridSize;
         public Coord gridSize { get { return _gridSize; } set { } }
-        private List<List<Cell<T>>> grid;
         public Grid(Coord param_gridSize)
         {
             _gridSize = param_gridSize;
-            grid = new List<List<Cell<T>>>();
             for (int row = 0; row < gridSize.row; row++)
             {
-                var gridRow = new List<Cell<T>>();
                 for (int col = 0; col < gridSize.col; col++)
                 {
-                    gridRow.Add(new Cell<T>(new Coord(row, col)));
+									var cell = new Cell<T>(new Coord(row, col));
+										nodes.Add(cell);
                 }
-                grid.Add(gridRow);
             }
+					foreach (Cell<T> cell in EachCell()){
+              var coord = cell.loc.Plus(new Coord(-1, 0));
+              if (InFrame(coord)){
+                cell.neighborEdges.Add(new GraphEdge<T>(GetCell(coord)));
+              }
+              coord = cell.loc.Plus(new Coord(0, -1));
+              if (InFrame(coord)){
+                cell.neighborEdges.Add(new GraphEdge<T>(GetCell(coord)));
+              }
+              coord = cell.loc.Plus(new Coord(1, 0));
+              if (InFrame(coord)){
+                cell.neighborEdges.Add(new GraphEdge<T>(GetCell(coord)));
+              }
+              coord = cell.loc.Plus(new Coord(0, 1));
+              if (InFrame(coord)){
+                cell.neighborEdges.Add(new GraphEdge<T>(GetCell(coord)));
+              }
+					}
         }
 
         public bool SetCell(Coord loc, T value)
         {
             if (InFrame(loc))
             {
-                grid[loc.row][loc.col].value = value;
+                GetCell(loc).value = value;
                 return true;
             }
             return false;
         }
-
-        public T GetCell(Coord loc)
+      
+        public Cell<T> GetCell(Coord loc)
         {
             if (InFrame(loc))
             {
-                return grid[loc.row][loc.col].value;
+                return (Cell<T>)nodes[loc.row * gridSize.col + loc.col];
             }
             throw new Exception("Coordinates out of range");
         }
@@ -155,7 +174,7 @@ using System.Threading.Tasks;
                 }
                 else
                 {
-                    result.SetCell(C, GetCell(offset));
+                    result.SetCell(C, GetCell(offset).value);
                 }
             }     
             return result;
@@ -163,12 +182,8 @@ using System.Threading.Tasks;
 
         public List<Cell<T>> EachCell()
         {
-            return grid.SelectMany(x => x).ToList();
+            return nodes.Select(x => (Cell<T>)x).ToList();
         }
-      
-      public List<Cell<T>> EachCellReadingOrder(){
-        return grid.SelectMany(x => x).OrderBy(x => x.loc.row).ThenBy(x => x.loc.col).ToList();
-      }
 
         public List<Coord> EachPoint()
         {
@@ -184,7 +199,7 @@ using System.Threading.Tasks;
                 Coord offset = topLeft.Plus(C);
                 if (InFrame(offset))
                 {
-                    SetCell(offset, grid.GetCell(C));
+                    SetCell(offset, grid.GetCell(C).value);
                 }
             }
             return true;
@@ -193,26 +208,45 @@ using System.Threading.Tasks;
 
 public class DijkstraStruct<T>// where T : new()
 {
-  public IGraphNode<T> node;
+  public GraphNode<T> node;
   public int distance;
 	public DijkstraStruct<T> previous;
 }
 
-public abstract class IGraphEdge<T>
+public class GraphEdge<T>
 {
-	public IGraphNode<T> destination;
+	public GraphNode<T> destination;
 	public int cost;
-}
-
-public abstract class IGraphNode<T>
-{
-  public List<IGraphEdge<T>> neighborEdges;
-}
-
-public abstract class IGraph<T>{
-  public List<IGraphNode<T>> nodes;
 	
-	public List<DijkstraStruct<T>> Dijkstra(IGraphNode<T> source){
+	public GraphEdge(GraphNode<T> _destination, int _cost = 1){
+		destination = _destination;
+		cost = _cost;
+	}
+}
+
+public abstract class GraphNode<T>
+{
+  public List<GraphEdge<T>> neighborEdges;
+  
+  public GraphNode(){
+    neighborEdges = new List<GraphEdge<T>>();
+  }
+  
+  public virtual bool Navigable(){
+    return true;
+  } 
+  
+  public abstract void Output();
+}
+
+public abstract class Graph<T>{
+  public List<GraphNode<T>> nodes;
+  
+  public Graph(){
+    nodes = new List<GraphNode<T>>();
+  }
+	
+	public List<DijkstraStruct<T>> Dijkstra(GraphNode<T> source){
 		List<DijkstraStruct<T>> result;
 		var Q = new List<DijkstraStruct<T>>();
 		foreach (var node in nodes){
@@ -228,7 +262,8 @@ public abstract class IGraph<T>{
 		}
 		result = new List<DijkstraStruct<T>>(Q);
 		while (Q.Count > 0){
-			Q.OrderBy(x => x.distance);
+      Q = Q.Where(x => x.distance >= 0).OrderBy(x => x.distance).Concat(Q.Where(x => x.distance < 0)).ToList();
+			//Q.OrderBy(x => x.distance);
 			var current = Q.First();
 			Q.Remove(current);
 			foreach (var neighborEdge in current.node.neighborEdges){
@@ -245,7 +280,7 @@ public abstract class IGraph<T>{
 		return result;
 	}
 	
-	public List<DijkstraStruct<T>> ShortestPath(List<DijkstraStruct<T>> dijkstraMap, IGraphNode<T> source, IGraphNode<T> destination){
+	public List<DijkstraStruct<T>> ShortestPath(List<DijkstraStruct<T>> dijkstraMap, GraphNode<T> source, GraphNode<T> destination){
 		var current = dijkstraMap.Where(x => x.node == destination).First();
 		var result = new List<DijkstraStruct<T>>();
 		while (current.previous != null){
@@ -264,7 +299,7 @@ public class ProbabilityVector {
     value = val;
   }
   
-  public int resolve(Random rng) {
+  public int Resolve(Random rng) {
     int definite = (int)Math.Floor(value);
     double chance = value - definite;
     if (chance >= rng.NextDouble()) {
