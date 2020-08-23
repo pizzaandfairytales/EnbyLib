@@ -227,9 +227,11 @@ public class GraphEdge<T>
 public abstract class GraphNode<T>
 {
   public List<GraphEdge<T>> neighborEdges;
+  public bool navigable;
   
   public GraphNode(){
     neighborEdges = new List<GraphEdge<T>>();
+    navigable = true;
   }
   
   public virtual bool Navigable(){
@@ -266,7 +268,7 @@ public abstract class Graph<T>{
 			//Q.OrderBy(x => x.distance);
 			var current = Q.First();
 			Q.Remove(current);
-			foreach (var neighborEdge in current.node.neighborEdges){
+			foreach (var neighborEdge in current.node.neighborEdges.Where(x => x.destination.navigable).ToList()){
 				var dstructNeighbor = Q.Where(x => x.node == neighborEdge.destination).FirstOrDefault();
 				if (dstructNeighbor != null){
 					var distance = current.distance + neighborEdge.cost;
