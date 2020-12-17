@@ -49,9 +49,10 @@ using System.Threading.Tasks;
         action(element);
 }
 
-        public static List<Coord> EachPoint(this Coord range)
+        public static List<Coord> EachPoint(this Coord range, bool horizontal = true)
         {
             var result = new List<Coord>();
+          if (horizontal){
             for (int row = 0; row < range.row; row++)
             {
                 for (int col = 0; col < range.col; col++)
@@ -59,6 +60,16 @@ using System.Threading.Tasks;
                     result.Add(new Coord(row, col));
                 }
             }
+          } else {
+            for (int col = 0; col < range.col; col++)
+            {
+                for (int row = 0; row < range.row; row++)
+                {
+                    result.Add(new Coord(row, col));
+                }
+            }
+          }
+            
             return result;
         }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 
     public class Coord
@@ -226,7 +227,9 @@ public class GraphEdge<T>
 
 public abstract class GraphNode<T>
 {
+[JsonIgnore]
   public List<GraphEdge<T>> neighborEdges;
+  [JsonIgnore]
   public bool navigable;
   
   public GraphNode(){
@@ -309,3 +312,103 @@ public class ProbabilityVector {
     return definite;
   }
 }
+
+public class ConsoleCell{
+[JsonIgnore]
+  public ArtColor bgColor, fgColor;
+  public char c;
+  
+  public ConsoleCell(){
+    bgColor = ArtColor.Black;
+    fgColor = ArtColor.White;
+    c = ' ';
+  }
+}
+
+public class ArtColor
+    {
+        private int _red, _green, _blue, colorRange, _opacity;
+        public int red { get => _red; set { _red = value.Clamp(0, colorRange); } }
+        public int green { get => _green; set { _green = value.Clamp(0, colorRange); } }
+        public int blue { get => _blue; set { _blue = value.Clamp(0, colorRange); } }
+        public int opacity { get => _opacity; set { _opacity = value.Clamp(0, 100); } }
+
+        public ArtColor(int r, int g, int b, int o = 100, int _colorRange = 256)
+        {
+            colorRange = _colorRange - 1;
+            red = r;
+            green = g;
+            blue = b;
+            opacity = o;
+        }
+
+        public ArtColor()
+        {
+            colorRange = 255;
+            red = colorRange;
+            green = colorRange;
+            blue = colorRange;
+        }
+
+        public System.Drawing.Color Render()
+        {
+            return System.Drawing.Color.FromArgb(red, green, blue);
+        }
+
+        public static readonly ArtColor Black = new ArtColor(0, 0, 0);
+        public static readonly ArtColor White = new ArtColor(255, 255, 255);
+        public static readonly ArtColor Red = new ArtColor(255, 0, 0);
+        public static readonly ArtColor Green = new ArtColor(0, 255, 0);
+        public static readonly ArtColor Blue = new ArtColor(0, 0, 255);
+        public static readonly ArtColor Cyan = new ArtColor(0, 255, 255);
+        public static readonly ArtColor Yellow = new ArtColor(255, 255, 0);
+        public static readonly ArtColor Magenta = new ArtColor(255, 0, 255);
+
+        public ArtColor Blend(ArtColor mixer, int mixerPercent = 50)
+        {
+            if (mixerPercent <= 0)
+            {
+                return this;
+            } else if (mixerPercent >= 100)
+            {
+                return mixer;
+            }
+            var thisPercent = 100 - mixerPercent;
+            var mixRed = Methods.FloorDivide(((red * (thisPercent * (opacity.Divide(100))))) + (mixer.red * (mixerPercent * (mixer.opacity.Divide(100)))), 100);
+            var mixGreen = Methods.FloorDivide(((green * (thisPercent * (opacity.Divide(100))))) + (mixer.green * (mixerPercent * (mixer.opacity.Divide(100)))), 100);
+            var mixBlue = Methods.FloorDivide(((blue * (thisPercent * (opacity.Divide(100))))) + (mixer.blue * (mixerPercent * (mixer.opacity.Divide(100)))), 100);
+            return new ArtColor(mixRed, mixGreen, mixBlue);
+        }
+  
+  public static List<ArtColor> PaletteExploder(List<ArtColor> input, int numDivisions, bool circular = false)
+        {
+            var result = new List<ArtColor>();
+            for (int x = 1; x < input.Count; x++)
+            {
+                var color2 = input[x];
+                var color1 = input[x - 1];
+                result.AddRange(ColorSplitter(color1, color2, numDivisions));
+            }
+            if (!circular)
+            {
+                result.Add(input.Last());
+            }
+            else
+            {
+                result.AddRange(ColorSplitter(input.Last(), input.First(), numDivisions));
+            }
+            return result;
+        }
+  
+  public static List<ArtColor> ColorSplitter(ArtColor c1, ArtColor c2, int numDivisions)
+        {
+            var result = new List<ArtColor>();
+            result.Add(c1);
+            for (int y = 0; y < numDivisions - 1; y++)
+            {
+                var blendPercent = 100.FloorDivide(numDivisions) * (y + 1);
+                result.Add(c1.Blend(c2, blendPercent));
+            }
+            return result;
+        }
+    }
