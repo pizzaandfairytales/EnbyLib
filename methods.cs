@@ -125,4 +125,8 @@ using System.Threading.Tasks;
           }
         return result;
         }
+      
+      public static bool IsSubsetOf<T>(this List<T> list, List<T> masterList){
+        return !list.Except(masterList).Any();
+      }
   }

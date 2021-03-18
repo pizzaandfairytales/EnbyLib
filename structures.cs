@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 
 
     public class Coord
@@ -205,6 +204,63 @@ using Newtonsoft.Json;
             }
             return true;
         }
+      public List<List<Cell<T>>> Rows(){
+        var result = new List<List<Cell<T>>>();
+        for (int row = 0; row < gridSize.row; row++){
+          var newRow = new List<Cell<T>>();
+          for (int col = 0; col < gridSize.col; col++){
+            newRow.Add(GetCell(new Coord(row, col)));
+          }
+          result.Add(newRow);
+        }
+        return result;
+      }
+      public List<List<Cell<T>>> Cols(){
+        var result = new List<List<Cell<T>>>();
+        for (int col = 0; col < gridSize.col; col++){
+          var newCol = new List<Cell<T>>();
+          for (int row = 0; row < gridSize.row; row++){
+            newCol.Add(GetCell(new Coord(row, col)));
+          }
+          result.Add(newCol);
+        }
+        return result;
+      }
+      
+      public List<List<Cell<T>>> FullDiagonals(){
+        var result = new List<List<Cell<T>>>();
+        if (gridSize.row != gridSize.col){
+          return result;
+        }
+        var downRight = new List<Cell<T>>();
+        var upRight = new List<Cell<T>>();
+        for(int x = 0; x < gridSize.row; x++){
+          downRight.Add(GetCell(new Coord(x, x)));
+        }
+        for (int x = 0; x < gridSize.row; x++){
+          upRight.Add(GetCell(new Coord((gridSize.row - 1) - x, x)));
+        }
+        result.Add(downRight);
+        result.Add(upRight);
+        return result;
+      }
+      
+      public List<List<Cell<T>>> AllSubsets(){
+        var result = new List<List<Cell<T>>>();
+        var rows = Rows();
+        var cols = Cols();
+        var diags = FullDiagonals();
+        foreach (var row in rows){
+          result.Add(row);
+        }
+        foreach (var col in cols){
+          result.Add(col);
+        }
+        foreach (var diag in diags){
+          result.Add(diag);
+        }
+        return result;
+      }
     }
 
 public class DijkstraStruct<T>// where T : new()
@@ -227,9 +283,7 @@ public class GraphEdge<T>
 
 public abstract class GraphNode<T>
 {
-[JsonIgnore]
   public List<GraphEdge<T>> neighborEdges;
-  [JsonIgnore]
   public bool navigable;
   
   public GraphNode(){
@@ -314,7 +368,6 @@ public class ProbabilityVector {
 }
 
 public class ConsoleCell{
-[JsonIgnore]
   public ArtColor bgColor, fgColor;
   public char c;
   
@@ -410,5 +463,100 @@ public class ArtColor
                 result.Add(c1.Blend(c2, blendPercent));
             }
             return result;
+        }
+    }
+
+public enum ResultStatus{
+    Success,
+    Error
+  }
+  
+  public class Result<T>{
+    public T Res;
+    public ResultStatus Status;
+    
+    public Result(T _res, ResultStatus _status = ResultStatus.Success){
+      Res = _res;
+      Status = _status;
+    }
+  }
+
+class TestController
+    {
+        TestSuite fullSuite;
+
+        public TestController()
+        {
+            fullSuite = new TestSuite();
+
+            // Add new test sets to the suit here
+            //fullSuite.subTests.Add(new BoardOperationTests());
+            //fullSuite.subTests.Add(new PieceMovementTests());
+            // MiscTests has full-game bot testing and can take a while so prefer to comment out unless specifically testing that
+            //fullSuite.subTests.Add(new MiscTests());
+            //fullSuite.subTests.Add(new MLAgentTests());
+        }
+
+        public bool run()
+        {
+            bool result = false;
+            string output = fullSuite.run();
+            if (output.Length == 0)
+            {
+                result = true;
+                output = "All tests passed.";
+            }
+            Console.WriteLine(output);
+            return result;
+        }
+
+    }
+
+    class TestSuite
+    {
+        public List<TestSuite> subTests;
+        public List<Test> tests;
+
+        public TestSuite()
+        {
+            subTests = new List<TestSuite>();
+            tests = new List<Test>();
+        }
+
+        public string run()
+        {
+            string output = "";
+            foreach (Test t in tests)
+            {
+                // Console.WriteLine("Testing: " + t.description);
+                if (t.run() == false)
+                {
+                    output += "Failed: " + t.description + "\n";
+                }
+            }
+            foreach (TestSuite t in subTests)
+            {
+                output += t.run();
+            }
+            return output;
+        }
+    }
+
+    abstract class Test
+    {
+        public string description;
+        abstract public bool run();
+    }
+
+    class IntentionalBadTest : Test // who watches the watchers?!
+    {
+        public IntentionalBadTest()
+        {
+            description = "This test is designed to fail. Don't include it in a real test suite.";
+        }
+
+        public override bool run()
+        {
+            return false;
         }
     }
