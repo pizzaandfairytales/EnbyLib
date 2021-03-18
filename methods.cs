@@ -48,6 +48,12 @@ using System.Threading.Tasks;
     foreach (T element in source) 
         action(element);
 }
+      
+      public static void Times(this int times, Action action){
+        for (int x = 0; x < times; x++){
+          action();
+        }
+      }
 
         public static List<Coord> EachPoint(this Coord range, bool horizontal = true)
         {
