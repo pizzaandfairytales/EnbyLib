@@ -402,6 +402,14 @@ public class ArtColor
             green = colorRange;
             blue = colorRange;
         }
+        
+        public ArtColor(string hex){
+            colorRange = 255;
+            opacity = 100;
+            red = int.Parse(hex.ToUpper().Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
+            green = int.Parse(hex.ToUpper().Substring(2, 2), System.Globalization.NumberStyles.HexNumber);
+            blue = int.Parse(hex.ToUpper().Substring(4, 2), System.Globalization.NumberStyles.HexNumber);
+        }
 
         public System.Drawing.Color Render()
         {
