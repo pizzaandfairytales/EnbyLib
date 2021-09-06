@@ -176,12 +176,19 @@ using System.IO;
           sw.Close();
       }
       
-      public static void Save(this string fileName, List<string> data, DateTime lastSave){
+      public static DateTime Save(this string fileName, List<string> data){
           fileName.WriteFile(data);
-          lastSave = DateTime.Now;
+          return DateTime.Now;
       }
       
       public static bool TimeToSave(DateTime lastSave, int interval){
-          return lastSave.Hour != DateTime.Now.Hour;
+          return lastSave == null || lastSave.Hour != DateTime.Now.Hour;
+      }
+      
+      public static DateTime TrySave(this string fileName, List<string> data, DateTime lastSave){
+          if (TimeToSave(lastSave, 1)){
+              return fileName.Save(data);
+          }
+          return lastSave;
       }
   }
