@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
 
     public static class Methods
     {
@@ -134,5 +135,53 @@ using System.Threading.Tasks;
       
       public static bool IsSubsetOf<T>(this List<T> list, List<T> masterList){
         return !list.Except(masterList).Any();
+      }
+      
+      public static string OutputString(this List<int> list){
+          var result = "";
+          foreach (var item in list){
+              result = result + item.ToString() + ", ";
+          }
+          if (result.Length > 0){
+            result = result.Substring(0, result.Length - 2);
+          }
+          return result;
+      }
+      
+      public static List<string> ReadFile(this string fileName){
+          var result = new List<string>();
+            try
+            {
+                StreamReader sr = new StreamReader(fileName);
+                var line = sr.ReadLine();
+                while (line != null)
+                {
+                    result.Add(line);
+                    line = sr.ReadLine();
+                }
+                sr.Close();
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine("Exception: " + e.Message);
+            }
+            return result;
+      }
+      
+      public static void WriteFile(this string fileName, List<string> data){
+          var sw = new StreamWriter(fileName);
+          foreach (var item in data){
+              sw.WriteLine(item);
+          }
+          sw.Close();
+      }
+      
+      public static void Save(this string fileName, List<string> data, DateTime lastSave){
+          fileName.WriteFile(data);
+          lastSave = DateTime.Now;
+      }
+      
+      public static bool TimeToSave(DateTime lastSave, int interval){
+          return lastSave.Hour != DateTime.Now.Hour;
       }
   }
