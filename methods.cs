@@ -168,7 +168,7 @@ using System.IO;
             return result;
       }
       
-      public static void WriteFile(this string fileName, List<string> data){
+      public static void WriteFile(this string fileName, string data){
           var sw = new StreamWriter(fileName);
           foreach (var item in data){
               sw.WriteLine(item);
@@ -176,16 +176,16 @@ using System.IO;
           sw.Close();
       }
       
-      public static DateTime Save(this string fileName, List<string> data){
+      public static DateTime Save(this string fileName, string data){
           fileName.WriteFile(data);
           return DateTime.Now;
       }
       
-      public static bool TimeToSave(DateTime lastSave, int interval){
-          return lastSave == null || lastSave.Hour != DateTime.Now.Hour;
+      public static bool TimeToSave(DateTime lastSave, int interval = 1){
+          return lastSave.Hour != DateTime.Now.Hour;
       }
       
-      public static DateTime TrySave(this string fileName, List<string> data, DateTime lastSave){
+      public static DateTime TrySave(this string fileName, string data, DateTime lastSave){
           if (TimeToSave(lastSave, 1)){
               return fileName.Save(data);
           }
