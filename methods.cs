@@ -148,31 +148,13 @@ using System.IO;
           return result;
       }
       
-      public static List<string> ReadFile(this string fileName){
-          var result = new List<string>();
-            try
-            {
-                StreamReader sr = new StreamReader(fileName);
-                var line = sr.ReadLine();
-                while (line != null)
-                {
-                    result.Add(line);
-                    line = sr.ReadLine();
-                }
-                sr.Close();
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine("Exception: " + e.Message);
-            }
-            return result;
+      public static string ReadFile(this string fileName){
+          return System.IO.File.ReadAllText(fileName);
       }
       
       public static void WriteFile(this string fileName, string data){
           var sw = new StreamWriter(fileName);
-          foreach (var item in data){
-              sw.WriteLine(item);
-          }
+          sw.WriteLine(data);
           sw.Close();
       }
       
@@ -181,12 +163,12 @@ using System.IO;
           return DateTime.Now;
       }
       
-      public static bool TimeToSave(DateTime lastSave, int interval = 1){
-          return lastSave.Hour != DateTime.Now.Hour;
+      public static bool TimePassed(this DateTime lastSave, TimeSpan interval){
+          return lastSave.Add(interval) <= DateTime.Now;
       }
       
-      public static DateTime TrySave(this string fileName, string data, DateTime lastSave){
-          if (TimeToSave(lastSave, 1)){
+      public static DateTime TrySave(this string fileName, string data, DateTime lastSave, TimeSpan interval){
+          if (lastSave.TimePassed(interval)){
               return fileName.Save(data);
           }
           return lastSave;
